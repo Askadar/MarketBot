@@ -1,6 +1,12 @@
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
+MarketBot/obj
+MarketBot/bin
+/packages
+# Settings files
+settings.json
+db.json
 
 # Folder config file
 Desktop.ini
