@@ -8,29 +8,32 @@
         xmlns:local="clr-namespace:MarketBot"
         xmlns:Properties="clr-namespace:MarketBot.Properties" xmlns:System="clr-namespace:System;assembly=mscorlib" xmlns:Models="clr-namespace:MarketBot.Models" x:Class="MarketBot.MainWindow"
         mc:Ignorable="d"
-        Title="MarketBot" Height="350" Width="640"
+        Title="MarketBot" Height="350" Width="800"
         DataContext="{DynamicResource VM}" >
     <Window.Resources>
         <vm:ViewModelMain x:Key="VM"/>
     </Window.Resources>
     <Grid x:Name="grid1">
         <Grid.RowDefinitions>
-            <RowDefinition Height="200*"/>
-            <RowDefinition Height="164*"/>
+            <RowDefinition Height="277*"/>
+            <RowDefinition Height="42*"/>
         </Grid.RowDefinitions>
-        <DataGrid Margin="10" HorizontalAlignment="Left" ItemsSource="{Binding Items}" VerticalAlignment="Top" MinWidth="200" MinHeight="30" HeadersVisibility="Column" AutoGenerateColumns="False">
+        <DataGrid Margin="10" HorizontalAlignment="Left" ItemsSource="{Binding Items}" VerticalAlignment="Top" HeadersVisibility="Column" AutoGenerateColumns="False" MinWidth="760" MinHeight="200">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding i_name}" MinWidth="200"></DataGridTextColumn>
+                <DataGridTextColumn Header="Name" Binding="{Binding i_name}" MinWidth="300"></DataGridTextColumn>
                 <DataGridTextColumn Header="Market price" Binding="{Binding ui_price}"></DataGridTextColumn>
                 <DataGridTextColumn Header="Bought price" Binding="{Binding b_price}"></DataGridTextColumn>
                 <DataGridTextColumn Header="Sold price" Binding="{Binding s_price}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Unique ID" Binding="{Binding ui_id}"></DataGridTextColumn>
                 <DataGridTextColumn Header="Position" Binding="{Binding position}"></DataGridTextColumn>
                 <DataGridTextColumn Header="Status" Binding="{Binding Status}"></DataGridTextColumn>
+                <DataGridTextColumn Header="class" Binding="{Binding i_classid}"></DataGridTextColumn>
+                <DataGridTextColumn Header="instance" Binding="{Binding i_instanceid}"></DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <Label x:Name="PingStatus"  Content="Waiting for ping" HorizontalAlignment="Left" Margin="10,0,0,10" Width="120" Grid.Row="1" VerticalAlignment="Bottom"/>
-        <Label Content="Balance: " HorizontalAlignment="Left" Margin="135,0,0,10" Grid.Row="1" VerticalAlignment="Bottom"/>
+        <Label x:Name="PingStatus"  Content="Waiting for ping" HorizontalAlignment="Left" Margin="10,0,0,10" Width="120" Grid.Row="1" VerticalAlignment="Bottom" Height="26"/>
+        <Label Content="Balance: " HorizontalAlignment="Left" Margin="135,0,0,10" Grid.Row="1" VerticalAlignment="Bottom" Height="26" Width="56"/>
         <Label x:Name="Balance" Content="{Binding Balance}" HorizontalAlignment="Left" Margin="196,0,0,10" Grid.Row="1" VerticalAlignment="Bottom"/>
+        <Button Content="Update Inventory" Command="{Binding Update}" HorizontalAlignment="Left" Margin="707,10,0,0" Grid.Row="1" VerticalAlignment="Top" Width="75"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="582,10,0,0" Grid.Row="1" TextWrapping="Wrap" Text="{Binding UpdateInterval}" VerticalAlignment="Top" Width="120"/>
     </Grid>
 </Window>

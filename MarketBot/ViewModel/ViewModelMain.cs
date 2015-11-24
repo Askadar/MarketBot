@@ -42,8 +42,10 @@ namespace MarketBot.ViewModel
         private double balance = 0;
         private static object _itemsLock = new object();
         private static string _apikey = Settings.LoadApi(); //blah, fix dat somehow...
+        private double updateInterval = 30;
 
-        public static string Apikey { get { return _apikey; } }
+
+        public static string Apikey { get { return _apikey; } set { _apikey = value; } }
         static public string update_req = "https://market.csgo.com/api/Trades/?key={0}"; //remove dat shiet
         public string FilePath { get; set; }
         public Inventory Items { get; set; }
@@ -59,23 +61,25 @@ namespace MarketBot.ViewModel
                 }
             }
         }
+        public double UpdateInterval { get { return updateInterval; } set { updateInterval = value; } }
 
 
-        
 
-        public Inventory items { get; set; }
 
+        //public Inventory items { get; set; }
+        //public RelayCommand Update { get; set; }
+        CancellationTokenSource updateTokenSource;
         public ViewModelMain()
         {
-            //Items = new Inventory();
+            Items = new Inventory();
             Load();
-            BindingOperations.EnableCollectionSynchronization(Items, _itemsLock); //testing-etc
             //UpdateInventory();
+            updateTokenSource = new CancellationTokenSource();
             Task Pinging = new Task(PingPong.Ping);
-            Task InvUpdate = new Task(UpdateInventory);
+            Task InvUpdate = new Task(UpdateInventory, updateTokenSource.Token);
             Pinging.Start();
             InvUpdate.Start();
-
+            BindingOperations.EnableCollectionSynchronization(Items, _itemsLock); //testing-etc
         }
         ~ViewModelMain()
         {
@@ -96,15 +100,15 @@ namespace MarketBot.ViewModel
         async void UpdateInventory()
         {
             UpdateBalance();
-            items = JsonConvert.DeserializeObject<Inventory>(Request.GetResponseTo("https://market.csgo.com/api/Trades/?key={0}", Apikey));
+            List<Item> items = JsonConvert.DeserializeObject<List<Item>>(Request.GetResponseTo("https://market.csgo.com/api/Trades/?key={0}", Apikey));
 
             //IEnumerable<Item> listedEnum = items.Where( i=> i); unnecessary 
             IEnumerable<Item> decide = items.Where(i => i.ui_status == 2 || i.ui_status == 4);
             foreach (var i in items)
             {
-                if (Items.Any(j => j.ui_id == i.ui_id))
+                if (Items.Any(j => j.i_classid == i.i_classid))
                 {
-                    Item updater = Items.Where(j => j.ui_id == i.ui_id).SingleOrDefault();
+                    Item updater = Items.Where(j => j.i_classid == i.i_classid).SingleOrDefault();
                     if (updater != null)
                     {
                         Items.Remove(i);
@@ -114,29 +118,37 @@ namespace MarketBot.ViewModel
                 else
                     Items.Add(i);
             }
+            for (int i = 0; i < Items.Count; i++)
+            {
+                if (!items.Contains(Items[i]))
+                {
+                    Items.Remove(Items[i]);
+                }
+            }
             foreach (var item in decide)
             {
                 item.Decide();
             }
-            await Task.Delay(30000);
+            await Task.Delay(TimeSpan.FromSeconds(UpdateInterval));
             //Items.Add(new Item()); delay testing purposes
             UpdateInventory();
         }
         private void Load()
         {
-            try
-            {
-                Items = JsonConvert.DeserializeObject<Inventory>(File.ReadAllText("db.json"));
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            //try
+            //{
+            //    Items = JsonConvert.DeserializeObject<Inventory>(File.ReadAllText("db.json"));
+            //}
+            //catch (Exception)
+            //{
+            //    throw;
+            //}
         }
         private void Save()
         {
-            string output = JsonConvert.SerializeObject(items);
-            File.WriteAllText(@"db.json", output);
+            //Need history inventory to make use of save-load features
+            //string output = JsonConvert.SerializeObject(items);
+            //File.WriteAllText(@"db.json", output);
         }
     }
 }

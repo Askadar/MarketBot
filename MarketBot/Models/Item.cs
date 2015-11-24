@@ -26,6 +26,7 @@ namespace MarketBot.Models
             {
                 return status[ui_status];
             }
+            set { }
         }
 
 
