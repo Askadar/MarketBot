@@ -1,5 +1,6 @@
 ﻿using MarketBot.Services;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace MarketBot.Models
 {
@@ -7,7 +8,7 @@ namespace MarketBot.Models
     // check it later
     // http://www.thomaslevesque.com/2009/04/17/wpf-binding-to-an-asynchronous-collection/
 
-    public class Inventory : ObservableCollection<Item>
+    public class Inventory : BindingList<Item>
     {
         public Inventory()
         {

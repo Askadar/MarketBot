@@ -1,4 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using MarketBot.Services;
+using MarketBot.ViewModel;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,11 +13,8 @@ namespace MarketBot.Models
 {
     public class Item
     {
-        private int i_classid;  // Identification stuff
-        private int i_instanceid;
-        private string ui_bid;  // Bot id, 1 for send
 
-        static private TaskFactory Decider;
+        static private TaskFactory Decider = new TaskFactory();
 
         private static Dictionary<int, string> status = new Dictionary<int, string>()
         {
@@ -29,6 +29,9 @@ namespace MarketBot.Models
         }
 
 
+        public string ui_bid { get; set; }  // Bot id, 1 for send
+        public int i_classid { get; set; }  // Identification stuff
+        public int i_instanceid { get; set; }
         public int ui_id { get; set; }  //future key for dictionary
         public int ui_status { get; set; }  // item status, 1 - listed, 2 - sold, 3 - bought, 4 - ready to recive
         public double ui_price { get; set; }  // Price in info
@@ -82,49 +85,12 @@ namespace MarketBot.Models
         }
         public void TrySend()
         {
-            Task x = new Task(Send);
-            x.Start();
-        }
-        private void Send()
-        {
-            //{
-            //    //Console.WriteLine("Да начнется отправка!");
-            //    string result = Request("https://market.csgo.com/api/ItemRequest/{0}/{1}/?key={2}", "in", "1", Apikey);
-            //    ResponseJ resp = JsonConvert.DeserializeObject<ResponseJ>(result);
-            //    //Console.WriteLine("Response: {0}", resp.error);
-            //    if (resp.success == true)
-            //    {
-            //        s_price = ui_price;
-            //        Console.WriteLine("Sending {0} to bot with secret: {1}. \nPrice: {2} | Revenue: not implemented", i_name, resp.secret, ui_price); //b_price - s_price
-            //        moving = false;
-            //        if (isListed == true)
-            //        {
-            //            Console.WriteLine("We sent wold item!");
-            //            DrawL -= this.DrawElement;
-            //            isListed = false;
-            //        }
-            //    }
-            //    else //Re-try in 25 seconds
-            //    {
-            //        Console.WriteLine("Aw, sh*t! We caught error: " + resp.error);
-            //        Thread.Sleep(TimeSpan.FromSeconds(25));
-            //    }
-            //}
-        }
-
-        internal void Decide()
-        {
-            switch (ui_status)
+            bool success = false;
+            do
             {
-                case 2:
-                    Decider.StartNew(TrySend);
-                    break;
-                case 4:
-                    Decider.StartNew(TryRecieve);
-                    break;
-                default:
-                    break;
-            }
+                success = Send();
+                Task.Delay(10000);
+            } while (!success);
         }
 
         public void TryRecieve()
@@ -132,11 +98,65 @@ namespace MarketBot.Models
             bool success = false;
             do
             {
-
+                success = Recieve();
+                Task.Delay(10000);
             } while (!success);
         }
-        private void Recieve()
+        private bool Send()
         {
+
+            //Console.WriteLine("Да начнется отправка!");
+            string result = Request.GetResponseTo("https://market.csgo.com/api/ItemRequest/{0}/{1}/?key={2}", "in", "1", ViewModelMain.Apikey);
+            JToken resp = JObject.Parse(result);
+            //bool success = (bool)resp["success"];
+            //Console.WriteLine("Response: {0}", resp.error);
+            if ((bool)resp["success"] == true)
+            {
+                s_price = ui_price;
+                return true;
+                //Console.WriteLine("Sending {0} to bot with secret: {1}. \nPrice: {2} | Revenue: not implemented", i_name, resp.secret, ui_price); //b_price - s_price
+                //moving = false;
+                //if (isListed == true)
+                //{
+                //    Console.WriteLine("We sent wold item!");
+                //    DrawL -= this.DrawElement;
+                //    isListed = false;
+                //}
+            }
+            //Re-try in 25 seconds
+            else
+                return false;
+            //Console.WriteLine("Aw, sh*t! We caught error: " + resp.error);
+            //Thread.Sleep(TimeSpan.FromSeconds(25));
+
+
+        }
+        private bool Recieve()
+        {
+            string result = Request.GetResponseTo("https://market.csgo.com/api/ItemRequest/{0}/{1}/?key={2}", "out", ui_bid, ViewModelMain.Apikey);
+            JToken resp = JObject.Parse(result);
+            if ((bool)resp["success"] == true)
+            {
+                b_price = ui_price;
+                return true;
+            }
+            else
+                return false;
+        }
+
+        internal void Decide()
+        {
+            switch (ui_status)
+            {
+                case 2:
+                    Decider.StartNew(TrySend);  //Task send = 
+                    break;
+                case 4:
+                    Decider.StartNew(TryRecieve);  //Task recieve = 
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
