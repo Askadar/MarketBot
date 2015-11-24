@@ -119,7 +119,7 @@ namespace MarketBot.ViewModel
                 item.Decide();
             }
             await Task.Delay(30000);
-            Items.Add(new Item());
+            //Items.Add(new Item()); delay testing purposes
             UpdateInventory();
         }
         private void Load()
