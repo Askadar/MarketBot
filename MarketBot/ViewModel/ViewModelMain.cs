@@ -43,6 +43,7 @@ namespace MarketBot.ViewModel
         private static object _itemsLock = new object();
         private static string _apikey = Settings.LoadApi(); //blah, fix dat somehow...
         private double updateInterval = 30;
+        private static bool executing;
 
 
         public static string Apikey { get { return _apikey; } set { _apikey = value; } }
@@ -61,8 +62,18 @@ namespace MarketBot.ViewModel
                 }
             }
         }
-        public double UpdateInterval { get { return updateInterval; } set { updateInterval = value; } }
-
+        public double UpdateInterval
+        {
+            get { return updateInterval; }
+            set { updateInterval = value; }
+        }
+        public static bool Executing
+        {
+            get { return executing; }
+            set { executing = value;
+                //set token to stop all
+            }
+        }
 
 
 
@@ -75,6 +86,7 @@ namespace MarketBot.ViewModel
             Load();
             //UpdateInventory();
             updateTokenSource = new CancellationTokenSource();
+            executing = true;
             Task Pinging = new Task(PingPong.Ping);
             Task InvUpdate = new Task(UpdateInventory, updateTokenSource.Token);
             Pinging.Start();
@@ -83,6 +95,8 @@ namespace MarketBot.ViewModel
         }
         ~ViewModelMain()
         {
+            executing = false;
+            //add update and ping stoppers
             Save();
             Settings.SaveApi(Apikey);
         }
@@ -99,39 +113,43 @@ namespace MarketBot.ViewModel
 
         async void UpdateInventory()
         {
-            UpdateBalance();
-            List<Item> items = JsonConvert.DeserializeObject<List<Item>>(Request.GetResponseTo("https://market.csgo.com/api/Trades/?key={0}", Apikey));
-
-            //IEnumerable<Item> listedEnum = items.Where( i=> i); unnecessary 
-            IEnumerable<Item> decide = items.Where(i => i.ui_status == 2 || i.ui_status == 4);
-            foreach (var i in items)
+            do
             {
-                if (Items.Any(j => j.i_classid == i.i_classid))
+
+                UpdateBalance();
+                List<Item> items = JsonConvert.DeserializeObject<List<Item>>(Request.GetResponseTo("https://market.csgo.com/api/Trades/?key={0}", Apikey));
+
+                //IEnumerable<Item> listedEnum = items.Where( i=> i); unnecessary 
+                IEnumerable<Item> decide = items.Where(i => i.ui_status == 2 || i.ui_status == 4);
+                foreach (var i in items)
                 {
-                    Item updater = Items.Where(j => j.i_classid == i.i_classid).SingleOrDefault();
-                    if (updater != null)
+                    if (Items.Any(j => j.i_classid == i.i_classid))
                     {
-                        Items.Remove(i);
-                        Items.Add(updater);
+                        Item updater = Items.Where(j => j.i_classid == i.i_classid).SingleOrDefault();
+                        if (updater != null)
+                        {
+                            Items.Remove(i);
+                            Items.Add(updater);
+                        }
+                    }
+                    else
+                        Items.Add(i);
+                }
+                for (int i = 0; i < Items.Count; i++)
+                {
+                    if (!items.Contains(Items[i]))
+                    {
+                        Items.Remove(Items[i]);
                     }
                 }
-                else
-                    Items.Add(i);
-            }
-            for (int i = 0; i < Items.Count; i++)
-            {
-                if (!items.Contains(Items[i]))
+                foreach (var item in decide)
                 {
-                    Items.Remove(Items[i]);
+                    item.Decide();
                 }
-            }
-            foreach (var item in decide)
-            {
-                item.Decide();
-            }
-            await Task.Delay(TimeSpan.FromSeconds(UpdateInterval));
-            //Items.Add(new Item()); delay testing purposes
-            UpdateInventory();
+                await Task.Delay(TimeSpan.FromSeconds(UpdateInterval));
+                //Items.Add(new Item()); delay testing purposes
+                //UpdateInventory(); possibru memory leak
+            } while (executing);
         }
         private void Load()
         {

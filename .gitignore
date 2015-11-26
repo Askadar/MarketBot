@@ -4,6 +4,7 @@ ehthumbs.db
 # Project excludes
 MarketBot/obj
 /packages
+*.suo
 *.exe
 # Settings files
 settings.json

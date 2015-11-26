@@ -35,10 +35,9 @@ namespace MarketBot.Services
                 finally
                 {
                     await Task.Delay(TimeSpan.FromSeconds(185));
-                    Ping(); // re-ping etc
                 }
 
-            } while (true);
+            } while (ViewModelMain.Executing);
         }
     }
 }
