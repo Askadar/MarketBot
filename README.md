@@ -1,4 +1,7 @@
 # MarketBot
+
+Development ceased after Steam Market updates that included mobile verification (somewhere in december of 2015, if I recall correctly). If you could provide nice way to do mobile confirmation (virtual device, some nice hack or whatever) I could update (or more accurately rewrite) bot in java script and stuff (C# dumped for some prolonged time as my main language)
+
 GUI version of my MarketBot for csgo.tm trading market (dota-smth support will be added in future)
 
 Alpha dev version so it is provided as is, you could submit bugs and issues, but better deal with them on your own and share.
